@@ -3,9 +3,10 @@ name: CI
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
   workflow_dispatch:
+
+# tag 上的测试由 release.yml 负责，这里只管分支与 PR
 
 permissions:
   contents: read

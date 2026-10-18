@@ -1,0 +1,73 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # 生成 release note 要拿上一个 tag，浅克隆取不到
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check tag matches package.json version
+        run: |
+          set -euo pipefail
+          tag_version="${GITHUB_REF_NAME#v}"
+          pkg_version="$(node -p "require('./package.json').version")"
+          if [ "$tag_version" != "$pkg_version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} 与 package.json 的 ${pkg_version} 不一致"
+            exit 1
+          fi
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Pack bundle
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          npm pack --pack-destination dist
+          ls -l dist
+
+      - name: Generate release notes
+        run: |
+          set -euo pipefail
+          prev_tag="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          echo "上一个 tag：${prev_tag:-（无，本次按首次发布处理）}"
+          node scripts/release-notes.mjs --from "$prev_tag" --to "$GITHUB_REF_NAME" > "$RUNNER_TEMP/release-notes.md"
+          echo '--- 自动生成的 release note ---'
+          cat "$RUNNER_TEMP/release-notes.md"
+
+      - name: Create or update GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          notes="$RUNNER_TEMP/release-notes.md"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release 已存在，补传资产并刷新正文"
+            gh release upload "$GITHUB_REF_NAME" dist/*.tgz --clobber
+            gh release edit "$GITHUB_REF_NAME" --notes-file "$notes"
+          else
+            gh release create "$GITHUB_REF_NAME" dist/*.tgz \
+              --title "$GITHUB_REF_NAME" \
+              --notes-file "$notes" \
+              --verify-tag
+          fi
