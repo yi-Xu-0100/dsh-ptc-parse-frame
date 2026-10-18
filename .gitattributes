@@ -1,0 +1,20 @@
+# 统一以 LF 存储并以 LF 检出：避免 Windows 上 CRLF 漂移、避免
+# "LF would be replaced by CRLF" 类噪音（本机 core.eol=crlf 且无仓库级属性）。
+* text=auto eol=lf
+
+# 明确文本类型，防止被自动探测成二进制
+*.md     text
+*.js     text
+*.mjs    text
+*.json   text
+*.yml    text
+*.yaml   text
+*.svg    text
+
+# 资源文件保持原样
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
