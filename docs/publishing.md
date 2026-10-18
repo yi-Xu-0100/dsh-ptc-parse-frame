@@ -42,6 +42,11 @@ topic 抓取插件仓库。它是 **GitHub topic，不是 issue label，也不�
 
     node scripts/release-notes.mjs --from v0.2.0 --to HEAD
 
+补发历史版本（例如 v0.2.0 发布时还没有 Release，2026-10-18 就是这样补的）：
+在 Actions 里跑 `Release` 的 workflow_dispatch，输入 tag（如 `v0.2.0`）。它从默认分支
+构建，按该 tag 的范围生成正文并创建 Release；资产与 tag 一致的前提是 `files` 白名单
+里的文件自该 tag 起没有改动过。
+
 > 为什么不用 GitHub 自带的 `--generate-notes`：它只统计 PR（What's Changed），
 > 本仓库的提交是直接进 main 的，实测生成出来只剩一行 "Full Changelog"，
 > 所以正文改为按提交类型自己生成。
