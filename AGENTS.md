@@ -31,6 +31,8 @@ DSH 的 Host-only 插件，给 `run_code`（PTC）的解析失败补回行号与
   要 spawn 子进程，会报 `EPERM`。
 - 改写条件见 README「行为边界」的 6 条，必须同时成立；放宽任一条件前先补对应单元测试。
 - 仓库统一 LF（`.gitattributes` 的 `* text=auto eol=lf`），不要提交 CRLF。
+- 发布只能靠推 `v<version>` tag 触发 CI（同时校验 tag 与 `package.json` 版本一致）；
+  不要在网页手动建 Release，正文由 `scripts/release-notes.mjs` 自动生成。
 - 本机沙箱下 `git` 可能打印 `fsmonitor_ipc__send_query` 报错，属噪音，不影响结果。
 - 文档用中文书写，一条事实只写一处；交叉引用使用完整文件名；新增文档文件名不带序号前缀，
   阅读顺序写在 README 的文档索引表里（现有正文标题保留章号）。

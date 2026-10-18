@@ -24,19 +24,27 @@ topic 抓取插件仓库。它是 **GitHub topic，不是 issue label，也不�
 
 > v0.1.0 只有文档；v0.2.0 起包含插件实现。两个 tag 均已推送到远端。
 
-## Release Notes 模板
+## 发布流程（GitHub Actions）
 
-    ## v0.1.0 (design)
+推送 `v<version>` tag 就会触发 `.github/workflows/release.yml`，不需要手动建 Release：
 
-    - 记录 DSH PTC 解析失败丢位置的根因与两版本差异
-    - 给出 Host 插件设计、实施计划与验证矩阵
-    - 附上游 discussion 现状与评论草稿
+1. 校验 tag 去掉 `v` 后与 `package.json` 的 `version` 一致，不一致直接失败；
+2. 跑 `npm test`；
+3. `npm pack` 出 `dsh-ptc-parse-frame-<version>.tgz`（内容由 `files` 白名单决定）作为 Release 资产；
+4. 用 `scripts/release-notes.mjs` 从 conventional commits 生成正文，按
+   新增 / 修复 / 文档 / 构建与杂项 分组，末尾附完整变更对比链接；
+5. 创建 Release；同名 Release 已存在时改为补传资产并刷新正文（幂等，重跑不会报错）。
 
-    ## v0.2.0 (plugin)
+    git tag -a v0.2.1 -m "v0.2.1: ..."
+    git push origin v0.2.1
 
-    - 实现 tools/post-execute 位置的代码框追加
-    - 兼容 DSH NEXT 2.0.19-next / PTC 0.2.1-rc.2
-    - 运行时异常与其它工具结果保持不变
+本地预览某一版的正文，不必等 CI：
+
+    node scripts/release-notes.mjs --from v0.2.0 --to HEAD
+
+> 为什么不用 GitHub 自带的 `--generate-notes`：它只统计 PR（What's Changed），
+> 本仓库的提交是直接进 main 的，实测生成出来只剩一行 "Full Changelog"，
+> 所以正文改为按提交类型自己生成。
 
 ## 安装方式
 
