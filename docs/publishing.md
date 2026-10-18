@@ -1,12 +1,19 @@
 # 06 · 发布到 GitHub
 
-## 仓库元数据建议
+## 仓库元数据（已设置）
 
 - 名称：dsh-ptc-parse-frame
 - 描述：DSH PTC run_code parse-error position plugin (line + code frame)
-- Topics：dsh, deepseek-harness, cordis, ptc, plugin, developer-tools
+- Homepage：仓库 README
+- Topics（2026-10-18 通过 API 设置）：dsh-plugin, deepseek-harness, deepseek, dsh,
+  cordis, ptc, plugin, developer-tools, nodejs
 - 许可证：MIT
-- 默认分支：main
+- 默认分支：main，Issues 已开启
+
+`dsh-plugin` 是插件发现入口：DSH 没有内置插件市场，生态目录（如
+awesome-dsh-plugins）按 GitHub 的 [`dsh-plugin`](https://github.com/topics/dsh-plugin)
+topic 抓取插件仓库。它是 **GitHub topic，不是 issue label，也不是 package.json 字段**；
+只写进 `keywords` 不会被发现，改动 topics 后也不会进 git 历史（只能通过 API 或网页设置）。
 
 ## 首次发布
 
@@ -15,7 +22,7 @@
     git tag -a v0.1.0 -m "v0.1.0: design docs"
     git push origin v0.1.0
 
-> 当前仓库处于设计阶段，v0.1.0 只有文档。插件实现完成后发 v0.2.0。
+> v0.1.0 只有文档；v0.2.0 起包含插件实现。两个 tag 均已推送到远端。
 
 ## Release Notes 模板
 
