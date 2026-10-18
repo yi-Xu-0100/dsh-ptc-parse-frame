@@ -1,0 +1,45 @@
+{
+  "name": "dsh-ptc-parse-frame",
+  "version": "0.2.0",
+  "private": true,
+  "description": "DSH PTC run_code plugin: append the parse error's line number and code frame so syntax mistakes are visible.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yi-Xu-0100/dsh-ptc-parse-frame.git"
+  },
+  "author": "yi_Xu (https://github.com/yi-Xu-0100)",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test/plugin.test.mjs"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "ptc",
+    "plugin",
+    "developer-tools"
+  ],
+  "license": "MIT"
+}

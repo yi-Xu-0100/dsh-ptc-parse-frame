@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "PTC Parse Frame",
+    "description": "When a run_code program fails to parse, append the parser's line number and code frame so the model can see the missing comma instead of resending the whole program."
+  }
+}

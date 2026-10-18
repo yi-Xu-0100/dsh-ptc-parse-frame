@@ -1,0 +1,7 @@
+- insert:
+    - id: ptc-parse-frame
+      name: dsh-ptc-parse-frame
+      config:
+        enabled: true
+        maxFrameLines: 10
+        sourceName: run_code.ts
