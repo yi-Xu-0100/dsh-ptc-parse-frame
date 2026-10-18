@@ -11,7 +11,7 @@
     `code run failed (exception): <parser message>`，并可能追加
     `\nFile sandbox: ...`；
   - `exec.arguments.code` 保留原始程序。
-- 产出：docs/08 的「API 确认」一节。
+- 产出：docs/research-notes.md 的「API 确认」一节。
 
 ## Phase 1 · 脚手架（已完成）
 
@@ -53,7 +53,7 @@
 - 已完成：在 PTC preset 会话里提交 `const a = ["x" "y"];`，确认位置出现；
 - 已完成：提交 `throw new Error("boom-e2e")` 确认未改写；
 - 待做：卸载插件确认恢复；
-- 版本与逐字输出见 docs/05 的「2026-10-18 端到端记录」。
+- 版本与逐字输出见 docs/verification.md 的「2026-10-18 端到端记录」。
 
 > 改完 `index.js` 后需要一次 profile recomposition 或重启，运行中的进程才会
 > 加载新模块；安装动作本身已经加载了当时的文件。

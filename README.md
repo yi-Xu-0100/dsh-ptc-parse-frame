@@ -28,7 +28,7 @@
 - 监听 `tools/post-execute`，只在 `run_code` 的解析失败上改写结果；
 - 自带 23 个单元测试，覆盖行号、代码框、运行时异常、幂等、配置与回退；
 - 已通过 `plugin_manager install_bundle` 安装到 `desktop` profile；
-- 端到端用例已在 PTC 会话中通过（用例 1–5、13，见 docs/05-verification.md）。
+- 端到端用例已在 PTC 会话中通过（用例 1–5、13，见 docs/verification.md）。
 
 ## 安装
 
@@ -88,7 +88,7 @@
 
 | 版本 | 形态 | 本仓库是否适用 |
 |---|---|---|
-| DSH Desktop 2.0.17（PTC 0.2.0-rc.2） | resources/app 解包 | 旧方案：文件补丁（legacy，见 docs/02） |
+| DSH Desktop 2.0.17（PTC 0.2.0-rc.2） | resources/app 解包 | 旧方案：文件补丁（legacy，见 docs/compatibility.md） |
 | DSH NEXT 2.0.19-next（PTC 0.2.1-rc.2） | resources/app.asar + profile 插件 | **本插件** |
 
 ## 开发与测试
@@ -108,15 +108,15 @@
 
 | 文档 | 内容 |
 |---|---|
-| docs/00-overview.md | 问题、目标、非目标 |
-| docs/01-background.md | 根因与证据 |
-| docs/02-compatibility.md | 两版本差异与旧方案为何失效 |
-| docs/03-design.md | 插件设计 |
-| docs/04-implementation-plan.md | 实施计划与验收标准 |
-| docs/05-verification.md | 验证矩阵与记录 |
-| docs/06-publishing.md | 发布到 GitHub 的步骤 |
-| docs/07-upstream.md | 上游 issue/discussion 现状与评论草稿 |
-| docs/08-research-notes.md | 复现、源码取证与 API 确认 |
+| docs/overview.md | 问题、目标、非目标 |
+| docs/background.md | 根因与证据 |
+| docs/compatibility.md | 两版本差异与旧方案为何失效 |
+| docs/design.md | 插件设计 |
+| docs/implementation-plan.md | 实施计划与验收标准 |
+| docs/verification.md | 验证矩阵与记录 |
+| docs/publishing.md | 发布到 GitHub 的步骤 |
+| docs/upstream.md | 上游 issue/discussion 现状与评论草稿 |
+| docs/research-notes.md | 复现、源码取证与 API 确认 |
 | docs/upstream-comment.md | 可直接粘贴到 #7618 的评论草稿 |
 
 ## 许可
