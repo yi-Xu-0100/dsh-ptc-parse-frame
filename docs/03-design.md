@@ -11,12 +11,13 @@ Host-only bundle：
         locale/en.json
         locale/zh.json
         icon.svg
+        test/plugin.test.mjs
 
 package.json 关键字段：
 
     {
       "name": "dsh-ptc-parse-frame",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "private": true,
       "type": "module",
       "exports": {
@@ -33,36 +34,61 @@ cordis.patch.yml：
     - insert:
         - id: ptc-parse-frame
           name: dsh-ptc-parse-frame
-          config: {}
+          config:
+            enabled: true
+            maxFrameLines: 10
+            sourceName: run_code.ts
 
-## 扩展点：优先 tools/post-execute
+## 扩展点：tools/post-execute
 
-practices.md 把 tools/post-execute 列为 waterfall listener：允许改写工具结果，
-不拥有决策时必须 return next()。这是最贴近需求、侵入最小的位置。
+运行时实际的 Event 契约（`cordis_inspect_query`，DSH NEXT 2.0.19-next）：
+
+    'tools/post-execute'(
+      this: Scoped<ToolRuntime>,
+      exec: ToolExecution,
+      result: Readonly<ToolExecutionResult>,
+      next: () => Promise<PostToolDecision>,
+    ): Promise<PostToolDecision>
+
+注意：**不是** `(exec, next)`，也不是 emit；`result` 是 waterfall 的输入参数，
+下游的 decision 由 `next()` 返回。`PostToolDecision` 的 `accept` 分支可以带
+`content` 替换结果文本（不能同时带 `value`）。
 
     export const inject = ['tools']
 
     export function apply(ctx, config) {
-      ctx.on('tools/post-execute', async (exec, next) => {
-        const result = await next()
-        return appendFrameWhenParseFailed(exec, result, config)
+      const options = resolveOptions(config)
+      ctx.on('tools/post-execute', async (exec, result, next) => {
+        const decision = await next()
+        try {
+          return decorate(exec, result, decision, options)
+        } catch {
+          return decision
+        }
       })
     }
 
-备选：包住 ctx.ptcRuntime.run（inject: ['ptcRuntime']）。它直接拿到 spec.program，
-对 retained / per-call 两条路径都成立；但需要确认服务实例方法可写，且要自己保持返回值形状。
-**实现前必须用 cordis_inspect_query 确认 Event 名称与回调签名**；文档也要求以运行时为准。
+先 await `next()` 再改写，保证不吞掉其它 listener 的 decision
+（`additionalContexts`、`block`、`value` 都原样保留）。
+
+备选是包住 `ctx.ptcRuntime.run`；它直接拿到 `spec.program`，但需要自己保持返回
+值形状，且无法复用工具结果管线的 decision 语义，因此没有采用。
 
 ## 判定条件
 
 只有当以下条件同时成立时才改写：
 
-1. 工具名是 run_code（PTC 的 code 工具）；
-2. 结果是一个失败，且错误文本像解析错误（Expected / Expression expected / Unexpected 等）；
-3. 错误文本里**还没有**位置（没有形如 run_code.ts:数字 的行）；
-4. 能取到原始 code（工具参数或 spec.program）。
+1. 工具名是 `run_code`；
+2. `result.isError === true`；
+3. `exec.arguments.code` 是非空字符串；
+4. `result.error.message` 以 `code run failed (exception): ` 开头；
+5. 用与 per-call 路径相同的包装重新解析原始 code 仍然失败；
+6. 解析器消息与错误消息中 `code run failed (exception): ` 之后的部分一致
+   （允许运行时再追加 `\nFile sandbox: ...` 等后缀）；
+7. 结果文本里还没有 `sourceName:<数字>` 形式的位置。
 
-任一不满足就原样返回。运行时异常（throw new Error）不会被误判：它们的程序能正常解析。
+任一不满足就原样返回。运行时异常（throw new Error）不会被误判：它们的程序能
+正常解析，第 5 步直接返回 undefined。
 
 ## 位置计算
 
@@ -74,29 +100,60 @@ practices.md 把 tools/post-execute 列为 waterfall listener：允许改写工�
        const wrapped = 'async function __dsh_program__() {\n' + code + '\n}'
        try { stripTypeScriptTypes(wrapped) } catch (e) { ... }
 
-3. 从 error.stack 取第一个空行之前的部分；
-4. 把首行 :N 改成 run_code.ts:(N-1)；
-5. 去掉包装函数那一行 async function __dsh_program__() {；
-6. 最多保留 maxFrameLines 行（默认 10），超出截断。
+3. 取 `error.stack` 第一个空行之前的部分：
+   - 首行 `:N` 是包装后程序里的错误行；
+   - 中间是错误行上下文，caret 行（`^\s*\^+\s*$`）给出列与宽度；
+4. 按 SWC 的上下文规则还原每一行对应的包装行号，再减 1 得到用户行号；
+5. 丢掉包装函数行（line 1）和 `\n}`（line > code 行数）；
+6. 把首行改成 `run_code.ts:<用户行号>`，最多保留 `maxFrameLines` 行。
 
 这样无论失败来自 retained 还是 per-call 路径，行号都对齐用户程序。
+
+## 插入位置
+
+真实错误文本可能带运行时后缀：
+
+    code run failed (exception): Expected ',', got 'string literal'
+    File sandbox: workspace-write.
+
+插件把 frame 插在 anchor（`code run failed (exception): <parser message>`）之后：
+
+    code run failed (exception): Expected ',', got 'string literal'
+    run_code.ts:1
+    const a = ["x" "y"];
+                   ^^^
+    File sandbox: workspace-write.
+
+如果内容已被其它插件改写、找不到 anchor，则退化为追加到最后一个 text block 末尾
+（仍然只在该 run_code 解析失败上发生）。
 
 ## 配置
 
     interface Config {
       enabled: boolean          // 默认 true
-      maxFrameLines: number     // 默认 10
+      maxFrameLines: number     // 默认 10，范围 1–40
       sourceName: string        // 默认 run_code.ts
     }
 
+`resolveOptions` 对缺失/非法值回退默认值，不会因为配置错误让插件激活失败。
+
 ## 安全与幂等
 
-- 整个改写包在 try/catch 里；任何异常都返回原 result，绝不改变失败原因；
+- 整个改写包在 try/catch 里；任何异常都返回下游 decision，绝不改变失败原因；
 - 已存在位置信息则跳过（上游修复或其它插件已处理时自然 no-op）；
+- 只在解析失败上改写，运行时异常、正常结果、其它工具逐字不变；
 - 不写 session 事件、不改会话日志格式；
-- 卸载插件即恢复原行为（注册通过 ctx.effect / ctx.on 自动清理）。
+- 卸载插件即恢复原行为（注册通过 ctx.on 自动清理）。
 
 ## Token 预算
 
-代码框上限 10 行，实测典型 5 行 / 140 字符 / 约 37 token；
+代码框上限 10 行，实测典型 4 行 / 约 80 字符 / 约 21 token；
 绝不透传整段 stack（约 261 token）。
+
+## 已知限制
+
+- 如果未来上游把位置直接放进 error.message，插件的 anchor 不再等于
+  `<parser message>`，会自动 no-op（此时也不需要插件了）；
+- `sourceName` 只用于显示与「已带位置」检测，不改变解析行为；
+- 只在 `tools/post-execute` 可见的 `run_code` 失败上生效；通过其它入口直接调用
+  PTC runtime 不经过这里。

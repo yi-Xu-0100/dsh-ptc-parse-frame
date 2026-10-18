@@ -31,9 +31,9 @@
     - 兼容 DSH NEXT 2.0.19-next / PTC 0.2.1-rc.2
     - 运行时异常与其它工具结果保持不变
 
-## 安装方式（实现完成后）
+## 安装方式
 
-首选官方入口：
+当前版本（0.2.0）已按下面的官方入口安装到本机 desktop profile：
 
     plugin_manager  action: install_bundle  target: <bundle 绝对目录>
 

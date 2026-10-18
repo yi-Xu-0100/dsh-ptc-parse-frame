@@ -18,6 +18,13 @@ DSH 的 run_code（PTC）在解析失败时，只把 error.message 返回给模�
 - 插件自身出错时返回原结果，绝不吞掉或改写失败原因；
 - 升级 DSH Desktop 不丢（插件在 profile 里，不在 app.asar 里）。
 
+## 实现状态
+
+**0.2.0 已实现。** 形态是 Host-only bundle（`index.js` + `cordis.patch.yml`），
+挂在 `tools/post-execute` 瀑布上；已通过 `plugin_manager install_bundle` 安装到
+desktop profile。单元测试覆盖 docs/05 中的逻辑用例；端到端用例需要在 PTC preset
+的会话里执行。
+
 ## 非目标
 
 - 不修复语法错误本身，也不让工具"容错"错误代码；

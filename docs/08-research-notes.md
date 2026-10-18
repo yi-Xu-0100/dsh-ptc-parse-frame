@@ -18,6 +18,33 @@
 
     Error: code run failed (exception): Expected ',', got 'string literal'
 
+## Phase 0 · API 确认（2026-10-18）
+
+用 `cordis_inspect_query` 与安装包源码核对，结果如下：
+
+| 项 | 实际值 | 来源 |
+|---|---|---|
+| Event | `tools/post-execute`，waterfall | Host Event catalog |
+| 签名 | `(this: Scoped<ToolRuntime>, exec: ToolExecution, result: Readonly<ToolExecutionResult>, next: () => Promise<PostToolDecision>)` | 同上 |
+| decision | `{ kind: 'accept', content?: ContentBlock[] }` 替换结果文本；不能同时带 `value` | dsh-tools `postExecute` |
+| 工具名 | `run_code`（`RUN_CODE_NAME`） | dsh-tools `lib/types/ptc.js` |
+| 参数 | `exec.arguments.code` 是原始程序；另有 `description` | 同上 |
+| 失败消息 | `code run failed (${kind}): ${message}${logsText}${sandboxText}...` | `ptc.js` 626–629 |
+| 解析失败 kind | `exception`；message 是 `stripTypeScriptTypes` 的 message | ptc-runtime `lib/index.js` 1354–1359、1591、1816–1820 |
+
+> 原设计文档假设 listener 是 `(exec, next)`，与运行时不符；实现按
+> `(exec, result, next)` 编写。
+
+### 真实错误文本（日志证据）
+
+`~/.dsh/logs/desktop-next.log`，2026-10-18T02:27:07Z：
+
+    code run failed (exception): Expected ',', got 'string literal'
+    File sandbox: workspace-write.
+
+说明 `sandboxText` 在未拒绝操作时也会追加；插件必须把代码框插在它之前，
+不能假设 parser message 是整条 error.message。
+
 ## app.asar 结构（实测）
 
 - 文件大小：180,923,876 字节

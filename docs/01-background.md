@@ -31,7 +31,16 @@ DSH NEXT 2.0.19-next，在 run_code 里写：
         return error instanceof Error ? error.message : String(error);
     }
 
-5. 上层把它拼成 code run failed (exception): <message>。
+5. 上层把它拼成 code run failed (exception): <message>；若运行时带了 sandbox 状态，
+   还会再拼一行 `File sandbox: <mode>[; enforcement: ...][; operation denied].`。
+   所以真实错误文本是：
+
+    Error: code run failed (exception): Expected ',', got 'string literal'
+    File sandbox: workspace-write.
+
+   2026-10-18 的 desktop-next.log 里可以逐字看到这一条（tool=run_code，
+   failureCode=CODE_RUN_FAILED）。插件的行号/代码框应插在 `File sandbox:` 之前，
+   而不是简单追加到整段文本末尾。
 
 所以问题不在 TypeScript 类型检查，也不在引号转义，而是**诊断信息在失败出口被截断**。
 消息里的 "string literal" 只是报错点那个 token 的类型名。
